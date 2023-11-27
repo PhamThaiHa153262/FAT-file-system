@@ -61,7 +61,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit3]
-FileName=RootDirectory.c
+FileName=FatLib.c
 CompileCpp=0
 Folder=
 Compile=1
@@ -70,11 +70,28 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit4]
-FileName=RootDirectory.c
-
 [Unit2]
-FileName=RootDirectory.h
+FileName=FatLib.h
+CompileCpp=0
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit5]
+FileName=BootSector.h
+CompileCpp=0
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit6]
+FileName=FatLib.h
 CompileCpp=0
 Folder=
 Compile=1
