@@ -1,97 +1,111 @@
-#include "Display.h"
-#include "RootDirectory.h"
 #include "LinkedList.h"
-#include <math.h>
-#define ROOT_DIRECTORY_SIZE 11
-#define SECTOR_SIZE 512
-//#pragma pack(1)
-// //Function to print the list of files
-//void FAT_Print_List_Files()
-//{
-//	uint8_t i;
-//	// Print header
-//    printf("File Name           Type                 Size              Date                   Time\n");
-//    printf("-----------------------------------------------------------------------------------------\n");
-//
-//    // Iterate through root directory entries and print information
-//    for ( i = 0; i < ROOT_DIRECTORY_SIZE; i++) 
-//    {
-//        if (entriesArr[i].FileAttribute != 0x10)
-//        {
-//        	i++;
-//        }
-//        printf("%s         %s                 %d               %d/%d/%d              %d:%d:%d \n",
-//               entriesArr[i].FileName,
-//               entriesArr[i].FileExtension,
-//               //(root_directory[i].attributes & 0x10) ? 'D' : 'F',
-//               entriesArr[i].FileSize,
-//               ((entriesArr[i].Date >> 9) & 0x7F) + 1980,
-//               (entriesArr[i].Date >> 5) & 0x0F,
-//               entriesArr[i].Date & 0x1F,
-//               (entriesArr[i].Time >> 11) & 0x1F,
-//               (entriesArr[i].Time >> 5) & 0x3F,
-//               (entriesArr[i].Time ) & 0x1F);
-//    }
-//}
-//
-//void displayFATEntries(FILE* pFile, uint32_t startAddr, uint8_t entriesNum, Node** head)
-//{
-//    Entries* entriesArr = (Entries*)malloc(entriesNum * sizeof(Entries));
-//    FAT_ReadEntries(pFile, startAddr, entriesNum, entriesArr);
-//
-//    uint8_t i;
-//    printf("File Name           Type                 Size              Date                   Time\n");
-//    printf("-----------------------------------------------------------------------------------------\n");
-//    for (i = 0; i < entriesNum; i++)
-//    {
-//        if (entriesArr[i].FileAttribute[1] == 0x10)
-//        {
-//            // ignore sub-folders
-//            continue;
-//        }
-//
-//        uint32_t fileSize = ArrFlipToNum(entriesArr[i].FileSize, 4);
-//        uint32_t clusterAddr = FAT_ClusterAddr(startAddr, ArrFlipToNum(entriesArr[i].ClusterNum, 2));
-//
-//        LinkedList_AddNode(head, clusterAddr, fileSize);
-//        printf("%s         %s                 %d               %d/%d/%d              %d:%d:%d \n",
-//    }
-//	
-//    free(entriesArr);
-//    
-//}
-Entries entriesArr[ROOT_DIRECTORY_SIZE];
-void displayFAT(FILE* pFile, uint32_t rootStart, uint32_t dataStart)
+#include "FatLib.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+
+static Node* head = NULL;
+static uint8_t Len = 0;
+
+Node* LinkedList_CreateNode(uint8_t inputdata) 
 {
-    uint8_t entriesNum = FAT_EntriesCount(pFile, rootStart);
-    Entries* entriesArr = (Entries*)malloc(ROOT_DIRECTORY_SIZE * sizeof(Entries));
-    FAT_ReadEntries(pFile, rootStart, entriesNum, entriesArr);
+    Node* new_node = (Node*)malloc(sizeof(Node));
+    new_node->data = inputdata;
+    new_node->next = NULL;
+    return new_node;
+}
+void LinkedList_AddNode(uint8_t inputdata) 
+{
+    Node* new_node = LinkedList_CreateNode(inputdata);
 
-    Node* head = NULL;
+    if (head == NULL) {
+        head = new_node;
+    } else {
+        Node* curr = head;
 
-    uint8_t i;
-    printf("File Name           Type                 Size              Date                   Time\n");
-    printf("-----------------------------------------------------------------------------------------\n");
-
-    for (i = 0; i < entriesNum; i++)
-    {
-        if (entriesArr[i].FileAttribute[1] == 0x10)
-        {
-            uint32_t clusterAddr = FAT_ClusterAddr(dataStart, ArrFlipToNum(entriesArr[i].ClusterNum, 2));
-            //displayFATEntries(pFile, clusterAddr, ROOT_DIRECTORY_SIZE, &head);
+        while (curr->next != NULL) {
+            curr = curr->next;
         }
-        else
-        {
-            uint32_t fileSize = ArrFlipToNum(entriesArr[i].FileSize, 4);
-            uint32_t clusterAddr = FAT_ClusterAddr(rootStart, ArrFlipToNum(entriesArr[i].ClusterNum, 2));
 
-          
-        }
+        curr->next = new_node;
     }
 
-    LinkedList_Display(head);
-
-    freeLinkedList(&head);
-    free(entriesArr);
+    Len++;
 }
 
+void LinkedList_DeleteNode(uint8_t inputdata) 
+{
+    if (head == NULL) 
+	{
+        return;
+    }
+
+    Node* curr = head;
+    Node* prev = NULL;
+
+    if (curr->data == inputdata) 
+	{
+        head = curr->next;
+        free(curr);
+        Len--;
+        return;
+    }
+
+    while (curr != NULL && curr->data != inputdata) 
+	{
+        prev = curr;
+        curr = curr->next;
+    }
+
+    if (curr == NULL) {
+        return;
+    }
+
+    prev->next = curr->next;
+    free(curr);
+    Len--;
+}
+
+void LinkedList_Display() 
+{
+    Node* curr = head;
+
+    while (curr != NULL) {
+        printf("%d\n ", curr->data);
+        curr = curr->next;
+    }
+
+    printf("\n");
+}
+//Operators(Create/add node/delete node)
+uint32_t LinkedList_GetLength() 
+{
+    return Len;
+}
+
+void LinkedList_PrintNodes() 
+{
+    Node* curr = head;
+    uint8_t count = 1;
+    
+    printf("Nodes: \n");
+    
+    while (curr != NULL) 
+	{
+        printf("Node %d: %d \n", count, curr->data);
+        curr = curr->next;
+        count++;
+    }
+    
+    printf("\n");
+}
+void freeLinkedList() 
+{
+    Node* temp = head;
+    while (head != NULL) {
+        temp = head;
+        head = head->next;
+        free(temp);
+    }
+}
