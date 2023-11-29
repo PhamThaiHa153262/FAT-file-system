@@ -7,8 +7,9 @@
 #define DateLen 2
 #define TimeLen 2
 
-void FAT_Print_header() {
-    printf("File Name  Type       Size(Bytes)    Date       Time\n");
+void FAT_Print_header() 
+{
+    printf("File Name\t\t\tType\t\t\tSize(Bytes)\t\tDate\t\tTime\n");
     printf("----------------------------------------------------------------------------------------------\n");
 }
 
@@ -20,7 +21,8 @@ void FAT_Print_List_Files(Entries entriesArr)
     if (entriesArr.FileAttribute[0] == 0x10) 
 	{
         printf("Folder\t\t\t");
-    } else 
+    } 
+	else 
 	{
         PrintArray(entriesArr.FileExtension, FileExtensionLen, "%c");
         printf("\t\t\t");
