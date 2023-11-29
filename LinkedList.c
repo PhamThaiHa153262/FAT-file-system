@@ -1,112 +1,156 @@
 #include "LinkedList.h"
-#include "Display.h"
-#include "RootDirectory.h"
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
 
+static NodeType *HEAD = NULL;
+static uint32_t Len = 0;
+static uint16_t DataSize = 0;
 
-static Node* head = NULL;
-static uint8_t Len = 0;
-
-Node* LinkedList_CreateNode(uint8_t inputdata) 
+// Create list
+ListStatusType List_Create(uint16_t dataSize)
 {
-    Node* new_node = (Node*)malloc(sizeof(Node));
-    new_node->data = inputdata;
-    new_node->next = NULL;
-    return new_node;
-}
-void LinkedList_AddNode(uint8_t inputdata) 
-{
-    Node* new_node = LinkedList_CreateNode(inputdata);
-
-    if (head == NULL) {
-        head = new_node;
-    } else {
-        Node* curr = head;
-
-        while (curr->next != NULL) {
-            curr = curr->next;
-        }
-
-        curr->next = new_node;
-    }
-
-    Len++;
-}
-
-void LinkedList_DeleteNode(uint8_t inputdata) 
-{
-    if (head == NULL) 
+	if(DataSize == 0)
 	{
-        return;
-    }
+		DataSize = dataSize;
+	}
+	
+	return LIST_OK;
+}
 
-    Node* curr = head;
-    Node* prev = NULL;
-
-    if (curr->data == inputdata) 
+// Add node
+ListStatusType List_AddFirst(uint8_t *Data)
+{
+	ListStatusType status = LIST_OK;
+	
+	if(DataSize > 0)
 	{
-        head = curr->next;
-        free(curr);
-        Len--;
-        return;
-    }
-
-    while (curr != NULL && curr->data != inputdata) 
+		// create none type data block
+		uint8_t *dataPtr = (uint8_t *)malloc(DataSize), i;
+		if(dataPtr != NULL)
+		{
+			for(i=0; i<DataSize; i++)
+			{
+				*(dataPtr+i) = *(Data+i);
+			}
+		}
+		else
+		{
+			status = LIST_OUT_OF_MEMORIES;
+		}
+		
+		// create node
+		NodeType *nodePtr = (NodeType*)malloc(sizeof(NodeType));
+		if(nodePtr != NULL)
+		{
+			nodePtr->DataPtr = dataPtr;
+			nodePtr->pNext = HEAD;
+			HEAD = nodePtr;
+			
+			Len++;
+		}
+		else
+		{
+			status = LIST_OUT_OF_MEMORIES;
+		}
+	}
+	else
 	{
-        prev = curr;
-        curr = curr->next;
-    }
-
-    if (curr == NULL) {
-        return;
-    }
-
-    prev->next = curr->next;
-    free(curr);
-    Len--;
+		status = LIST_NOT_CREATE;
+	}
+	
+	return  status;
 }
 
-void LinkedList_Display() 
+// Delete node by index
+ListStatusType List_Delete(uint32_t index)
 {
-    Node* curr = head;
-
-    while (curr != NULL) {
-        printf("%d\n ", curr->data);
-        curr = curr->next;
-    }
-
-    printf("\n");
-}
-//Operators(Create/add node/delete node)
-uint32_t LinkedList_GetLength() 
-{
-    return Len;
-}
-
-void LinkedList_PrintNodes() 
-{
-    Node* curr = head;
-    uint8_t count = 1;
-    
-    printf("Nodes: \n");
-    
-    while (curr != NULL) 
+	ListStatusType status = LIST_OK;
+	NodeType *current = HEAD, *tempPtr;
+	uint32_t i=0;
+	
+	do
 	{
-        printf("Node %d: %d \n", count, curr->data);
-        curr = curr->next;
-        count++;
-    }
-    
-    printf("\n");
+		// Out of range
+		if(index >= Len)
+		{
+			status = LIST_OUT_OF_RANGE;
+			break;
+		}
+		
+		// Delete first index
+		if(index == 0)
+		{
+			HEAD = HEAD->pNext;
+			free(current->DataPtr);
+			free(current);
+			Len--;
+			break;
+		}
+		
+		// Delete other index
+		if(i == index-1)
+		{
+			tempPtr = current->pNext;
+			current->pNext = current->pNext->pNext;
+			free(tempPtr->DataPtr);
+			free(tempPtr);
+			Len--;
+			break;
+		}
+		
+		current = current->pNext;
+		i++;
+	}
+	while(current != NULL);
+	
+	return status;
 }
-void freeLinkedList() 
+
+// Print All
+/*
+ListStatusType List_Print()
 {
-    Node* temp = head;
-    while (head != NULL) {
-        temp = head;
-        head = head->next;
-        free(temp);
-    }
+	NodeType *current = HEAD;
+	
+	while(current != NULL)
+	{
+		printf("%d ", current->DataPtr);
+		current = current->pNext;
+	}
+	
+	return LIST_OK;
+}
+*/
+
+// Get value by index
+ListStatusType List_GetData(uint8_t *dataRecv ,uint32_t index)
+{
+	NodeType *current = HEAD;
+	uint32_t i = 0;
+	
+	if(index >= Len)
+	{
+		return LIST_OUT_OF_RANGE;
+	}
+	
+	while(current != NULL)
+	{
+		if(i == index)
+		{
+			int i;
+			//sent byte to data receiver
+			for(i=0; i<DataSize; i++)
+			{
+				*(dataRecv+i) = *((current->DataPtr)+i);
+			}
+		}
+		current = current->pNext;
+		i++;
+	}
+	
+	return LIST_OK;
+}
+
+// Get length
+uint32_t List_GetLen()
+{
+	return Len;
 }

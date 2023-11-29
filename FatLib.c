@@ -5,14 +5,24 @@ static FILE *pFile;
 static uint16_t RootStartAddr;
 static uint16_t DataStartAddr;
 
-void FAT_Open(char *fileDir)
+Fat_Status FAT_Open(char *fileDir)
 {
-	pFile = fopen(fileDir, "r");
-	fseek(pFile, 0x0, SEEK_SET);
-	fgets(&bootBlock, sizeof(bootBlock), pFile);
+	Fat_Status status = FAT_OK;
+	pFile = fopen(fileDir, "rb");
+	if(pFile != NULL)
+	{
+		fseek(pFile, 0x0, SEEK_SET);
+		fgets(&bootBlock, sizeof(bootBlock), pFile);
+		
+		RootStartAddr = (ArrFlipToNum(bootBlock.FATblocks, 2) * bootBlock.FATnum[0] + 0x1) * 0x200;
+		DataStartAddr = (RootStartAddr/0x200) + (ArrFlipToNum(bootBlock.rootNum, 2)*32/512) - 2;
+	}
+	else
+	{
+		status = FAT_FILE_NOT_FOUND;
+	}
 	
-	RootStartAddr = (ArrFlipToNum(bootBlock.FATblocks, 2) * bootBlock.FATnum[0] + 0x1) * 0x200;;
-	DataStartAddr = (RootStartAddr/0x200) + (ArrFlipToNum(bootBlock.rootNum, 2)*32/512) - 2;
+	return status;
 }
 
 void FAT_Close()
@@ -29,10 +39,6 @@ void FAT_ReadEntries(uint32_t startAddr, uint8_t *EntriesNum, Entries entriesArr
 	fseek(pFile, startAddr, SEEK_SET);
 	for(i=0; i<totalEntries; i++)
 	{
-//		fgets(&entries, sizeof(entries), pFile);
-//		entriesArr[i] = entries;
-//		fseek(pFile, 0x01, SEEK_CUR);
-
 		fseek(pFile, 0x0b, SEEK_CUR);
 		if(fgetc(pFile) == 0x0f) 			// Long file name
 		{
@@ -82,16 +88,6 @@ uint8_t FAT_EntriesCountAll(uint32_t startAddr)
 	return count;
 }
 
-uint8_t FAT_EntriesCount(uint32_t startAddr)
-{
-	uint8_t count = 0, attribute;
-	
-	fseek(pFile, startAddr, SEEK_SET);
-	
-	
-	return count;
-}
-
 // Calculating address from cluster number
 uint32_t FAT_ClusterAddr(uint32_t startCluster, uint16_t clusterNum)
 {
@@ -118,44 +114,20 @@ void read_sector(uint32_t sector_number, char *buffer)
 // Function to get the next cluster number from the FAT
 uint32_t get_next_cluster_number(uint32_t current_cluster) 
 {
-    uint32_t fat_offset = current_cluster + (current_cluster / 2); // Each entry is 12 bits, so 2 entries per 3 bytes
-    uint32_t fat_sector = 1 + fat_offset / SECTOR_SIZE; // FAT starts from sector 1
-    uint32_t fat_entry_offset = fat_offset % SECTOR_SIZE;
-    uint32_t result;
+    uint32_t fat_offset = current_cluster + (current_cluster >> 1); // Each entry is 12 bits, so 2 entries per 3 bytes
     
-    char buffer[SECTOR_SIZE];
-    read_sector(fat_sector, buffer);
-	
+    uint8_t buffer[2];
+    fseek(pFile, 1*SECTOR_SIZE + fat_offset, SEEK_SET);
+    fgets(buffer,3,pFile);
+
     // Extract the cluster number based on whether it's an even or odd entry
-    if (current_cluster % 2 == 0)
+    if (current_cluster % 2 == 0) 
     {
-        result = ((buffer[fat_entry_offset + 1] & 0x0F) << 8) | buffer[fat_entry_offset];
-    }
+        return ((buffer[1] & 0xF) << 8) | buffer[0];
+    } 
     else
     {
-        result = (buffer[fat_entry_offset + 1] << 4) | ((buffer[fat_entry_offset] & 0xF0) >> 4);
-    }
-    return result;
-}
-
-// Function to read the content of a file
-void read_file_content(Entries entry) 
-{
-    uint32_t cluster_number = ArrFlipToNum(entry.ClusterNum, 2);
-    char buffer[SECTOR_SIZE];
-    while (cluster_number < 0xFFF)
-    {
-    	read_sector(31+cluster_number, buffer);
-//	    printf("\n\n%x\n",cluster_number); // Test cluster_number
-//		printf("%.*s", SECTOR_SIZE, buffer);
-		
-		PrintArray(buffer, SECTOR_SIZE, "%c");
-		
-		cluster_number = get_next_cluster_number(cluster_number); // Move to the next cluster
-		if(cluster_number == 0x7f)
-		{
-			printf("\n%d\n", 1);
-		}
+        return (buffer[1] << 4) | ((buffer[0] & 0xF0) >> 4);
     }
 }
 
@@ -194,14 +166,4 @@ uint32_t ArrFlipToNum(uint8_t input[], uint8_t Len)
 	}
 	
 	return result;
-}
-
-void PrintArray(uint8_t input[], uint16_t Len, char *type)
-{
-	uint16_t i;
-	for(i=0; i<Len; i++)
-	{
-		printf(type, input[i]);
-	}
-//	printf("\n");
 }

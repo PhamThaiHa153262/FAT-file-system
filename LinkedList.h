@@ -1,24 +1,29 @@
-
-#ifndef _LINKEDLIST_H
-#define _LINKEDLIST_H
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef struct 
+#ifndef _LISTLIB_H
+#define _LISTLIB_H
+
+typedef struct Node
 {
-    uint8_t data;
-    struct Node* next;
-} Node;
+	uint8_t *DataPtr;
+	struct Node *pNext;
+} NodeType;
 
+typedef enum
+{
+	LIST_OK					= 0U,
+	LIST_OUT_OF_RANGE		= 1U,
+	LIST_OUT_OF_MEMORIES 	= 2U,
+	LIST_NOT_CREATE			= 3U
+} ListStatusType;
 
-Node* LinkedList_CreateNode(uint8_t inputdata);
-void LinkedList_AddNode(uint8_t inputdata);
-void LinkedList_DeleteNode(uint8_t inputdata);
-void LinkedList_Display();
-uint32_t LinkedList_GetLength();
-void LinkedList_PrintNodes();
+ListStatusType List_Create(uint16_t dataSize);
+ListStatusType List_AddFirst(uint8_t *Data);
+ListStatusType List_Delete(uint32_t index);
+//ListStatusType List_Print();
+ListStatusType List_GetData(uint8_t *dataRecv ,uint32_t index);
+uint32_t List_GetLen();
 
-
-#endif /* _LINKEDLIST_H */
+#endif
