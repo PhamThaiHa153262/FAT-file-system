@@ -7,7 +7,7 @@ static uint16_t DataStartAddr;
 
 void FAT_Open(char *fileDir)
 {
-	pFile = fopen(fileDir, "r");
+	pFile = fopen(fileDir, "rb");
 	fseek(pFile, 0x0, SEEK_SET);
 	fgets(&bootBlock, sizeof(bootBlock), pFile);
 	
@@ -109,7 +109,7 @@ uint16_t FAT_DataStartAddr()
 }
 
 //Function to read a sector from the disk
-void read_sector(uint32_t sector_number, char *buffer) 
+void read_sector(uint32_t sector_number, uint8_t *buffer) 
 {
     fseek(pFile, sector_number * SECTOR_SIZE, SEEK_SET);
     fread(buffer, 1, SECTOR_SIZE, pFile);
@@ -142,20 +142,21 @@ uint32_t get_next_cluster_number(uint32_t current_cluster)
 void read_file_content(Entries entry) 
 {
     uint32_t cluster_number = ArrFlipToNum(entry.ClusterNum, 2);
-    char buffer[SECTOR_SIZE];
+    uint8_t buffer[SECTOR_SIZE];
     while (cluster_number != 0xFFF)
     {
     	read_sector(31+cluster_number, buffer);
-//	    printf("\n\n%x\n",cluster_number); // Test cluster_number
-//		printf("%.*s", SECTOR_SIZE, buffer);
+	  //  printf("\n\n%x\n",cluster_number); // Test cluster_number
+		//printf("%.*s", SECTOR_SIZE, buffer);
 		
 		PrintArray(buffer, SECTOR_SIZE, "%c");
 		
 		cluster_number = get_next_cluster_number(cluster_number); // Move to the next cluster
-		if(cluster_number == 0x7f)
-		{
-			printf("\n%d\n", 1);
-		}
+	     //printf("%X\n",cluster_number);
+//		if(cluster_number == 0x7f)
+//		{
+//			printf("\n%d\n", 1);
+//		}
     }
 }
 
