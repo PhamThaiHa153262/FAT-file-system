@@ -3,10 +3,10 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "linkedlist.h"
-#include "RootDirectory.h"
+#include "LinkedList.h"
+#include "FatLib.h"
 
-//void displayFATEntries(FILE* pFile, uint32_t startAddr, uint8_t entriesNum, Node** head);
-void displayFAT(FILE* pFile, uint32_t rootStart, uint32_t dataStart);
+void FAT_Print_header();
+void FAT_Print_List_Files(Entries entriesArr);
 
 #endif		/* _DISPLAY_H_ */
