@@ -4,6 +4,7 @@ void FAT_Display(char *file)
 {
 	Fat_Status status;
 	status = FAT_Open(file);
+	system("cls");
 	
 	if(status != FAT_FILE_NOT_FOUND)
 	{
@@ -18,8 +19,9 @@ void FAT_Display(char *file)
 		{
 			FAT_ReadEntries(curAddr, &entriesNum, entriesArr);
 			
-			if(inFile == 0)
+			if(!inFile)
 			{
+				// Print entries
 				FAT_Print_header();
 				for(i=0; i<entriesNum; i++)
 				{
@@ -28,6 +30,7 @@ void FAT_Display(char *file)
 				}
 			}
 			
+			// input form
 			printf("\n");
 			if(status == FAT_INVALID_INPUT)
 			{
@@ -46,7 +49,7 @@ void FAT_Display(char *file)
 			fflush(stdin);
 			scanf("%s", &inputStr);
 			system("cls");
-			
+				
 			// Input check
 			status = InputCheck(inputStr, entriesNum, &inputNum);
 			if(status == FAT_INVALID_INPUT)
